@@ -94,7 +94,7 @@ stt_project/
 ✅ **File Upload Transcription**
 
 - Supports any audio format (wav, mp3, ogg, etc.)
-- Uses HuggingFace Whisper API (via local backend)
+- Uses Groq Whisper API (whisper-large-v3)
 - CORS-safe proxy architecture
 
 ✅ **Demo Samples**
@@ -126,7 +126,7 @@ stt_project/
 python backend.py
 ```
 
-### "HuggingFace API key not set" error
+### "Groq API key not set" error
 
 **Solution:** Set your Groq API key before starting backend:
 
@@ -136,6 +136,13 @@ export GROQ_API_KEY=your_key  # Linux/Mac
 python backend.py
 ```
 
+**Get your free Groq API key:**
+1. Visit https://console.groq.com
+2. Sign up for a free account
+3. Navigate to API Keys section
+4. Create a new API key
+5. Copy and use it in your environment
+
 ### Microphone not working
 
 **Solution:** Ensure:
@@ -143,6 +150,51 @@ python backend.py
 - Browser supports Web Speech API (Chrome, Edge, Safari)
 - You allowed microphone access when prompted
 - Use HTTPS or localhost for secure context
+
+---
+
+## Deployment
+
+### Deploy Frontend (GitHub Pages)
+
+1. Push your code to GitHub
+2. Go to repository Settings → Pages
+3. Source: Deploy from branch `main` → `/ (root)`
+4. Your site will be live at: `https://YOUR_USERNAME.github.io/REPO_NAME/`
+
+### Deploy Backend (Render.com)
+
+1. Sign up at [render.com](https://render.com)
+2. Create New Web Service
+3. Connect your GitHub repository
+4. Configure:
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `python backend.py`
+5. Add Environment Variable:
+   - **Key**: `GROQ_API_KEY`
+   - **Value**: Your Groq API key from https://console.groq.com
+6. Deploy!
+
+### Update Frontend to Use Deployed Backend
+
+In `js/app.js`, update the fetch URL:
+```javascript
+const response = await fetch('https://your-backend.onrender.com/transcribe', {
+```
+
+---
+
+## API Information
+
+### Groq Whisper API
+
+- **Model**: whisper-large-v3
+- **Provider**: Groq (https://groq.com)
+- **Speed**: Ultra-fast inference
+- **Cost**: Free tier available
+- **Supported Formats**: wav, mp3, ogg, flac, m4a, webm
+- **Max File Size**: 25 MB
+- **Languages**: 99+ languages including Hindi, Marathi, English
 
 ---
 
@@ -162,72 +214,3 @@ Built as a demonstration project.
 Audio inference powered by Groq & OpenAI Whisper model.
 
 ---
-
-| bn | Bengali | বাংলা | ai4bharat/indicwav2vec-bengali |
-| kn | Kannada | ಕನ್ನಡ | ai4bharat/indicwav2vec-kannada |
-| gu | Gujarati | ગુજરાતી | ai4bharat/indicwav2vec-gujarati |
-| pa | Punjabi | ਪੰਜਾਬੀ | ai4bharat/indicwav2vec-punjabi |
-
----
-
-## Tech Stack
-
-| Tool                     | Role                                 |
-| ------------------------ | ------------------------------------ |
-| PyTorch                  | Deep learning framework              |
-| HuggingFace Transformers | Model loading & inference            |
-| Wav2Vec 2.0 XLSR-53      | Core speech recognition architecture |
-| torchaudio               | Audio loading & resampling           |
-| jiwer                    | WER computation                      |
-| AI4Bharat Indic Corpus   | Training & evaluation data           |
-| Google Colab             | Cloud execution environment          |
-
----
-
-## Audio Requirements
-
-- Format: `.wav` (preferred) or `.mp3`
-- Sampling rate: any (auto-resampled to 16kHz)
-- Channels: mono or stereo (auto-converted to mono)
-- Duration: up to ~60 seconds for best results
-
----
-
-## Pipeline
-
-```
-Audio Input (.wav/.mp3)
-       ↓
-Stereo → Mono Conversion
-       ↓
-Resample to 16kHz
-       ↓
-Wav2Vec2Processor (feature extraction)
-       ↓
-Wav2Vec2ForCTC (forward pass)
-       ↓
-Argmax → Token IDs
-       ↓
-processor.decode() → Transcription Text
-       ↓
-WER Analysis (optional)
-```
-
----
-
-## WER Metrics
-
-- **WER (Word Error Rate)**: fraction of words incorrectly transcribed
-- **Accuracy**: `(1 - WER) × 100%`
-- Lower WER = better performance
-
----
-
-## Keywords
-
-Multilingual Speech Recognition · Indian Languages · Deep Learning · Wav2Vec 2.0  
-Speech-to-Text · Digital Inclusion · Indic Speech Corpus · Transformer Models
-
----
-
-_Built for AI4Bharat Digital Inclusion Hackathon_

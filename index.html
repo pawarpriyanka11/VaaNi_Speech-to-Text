@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VaaNi — Multilingual Speech-to-Text for Indian Languages</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <div class="bg-grid"></div>
+  <div class="bg-blob blob-1"></div>
+  <div class="bg-blob blob-2"></div>
+
+  <header class="site-header">
+    <div class="logo">
+      <span class="logo-devanagari">वाणी</span>
+      <span class="logo-latin">VaaNi</span>
+    </div>
+    <nav class="header-nav">
+      <a href="#demo" class="hn-link active">Demo</a>
+      <a href="#about" class="hn-link">About</a>
+      <a href="#tech" class="hn-link">Stack</a>
+    </nav>
+    <div class="corpus-badge">Live Speech Recognition</div>
+  </header>
+
+  <section class="hero" id="demo">
+    <div class="hero-kicker">Web Speech & Cloud Whisper API • Live + File</div>
+    <h1 class="hero-h1">Multilingual<br/><em>Speech-to-Text</em><br/>for All Audio</h1>
+    <p class="hero-p">Convert spoken Indian languages into text using browser and cloud inference. Supports Hindi, Marathi & English.</p>
+    <div class="hero-scroll-hint">↓ Try the demo below</div>
+  </section>
+
+  <main class="app-wrapper">
+
+    <!-- STEP 1 -->
+    <div class="step-card" id="cardLang">
+      <div class="sc-num">01</div>
+      <div class="sc-body">
+        <h2 class="sc-title">Select Language</h2>
+        <div class="lang-grid" id="langGrid">
+          <button class="lb active" data-lang="hi"><span class="lb-script">हि</span><span class="lb-en">Hindi</span><span class="lb-native">हिन्दी</span></button>
+          <button class="lb" data-lang="mr"><span class="lb-script">म</span><span class="lb-en">Marathi</span><span class="lb-native">मराठी</span></button>
+          <button class="lb" data-lang="en"><span class="lb-script">E</span><span class="lb-en">English</span><span class="lb-native">English</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step-card" id="cardAudio">
+      <div class="sc-num">02</div>
+      <div class="sc-body">
+        <h2 class="sc-title">Provide Audio</h2>
+        <div class="tab-row">
+          <button class="tab active" id="tabUpload" onclick="switchTab('upload')">Upload File</button>
+          <button class="tab" id="tabMic" onclick="switchTab('mic')">Microphone</button>
+          <button class="tab" id="tabDemo" onclick="switchTab('demo')">Demo Samples</button>
+        </div>
+
+        <!-- Upload panel -->
+        <div class="panel active" id="panelUpload">
+          <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+            <div class="dz-inner">
+              <svg class="dz-svg" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="6" y="6" width="36" height="36" rx="8"/>
+                <path d="M24 32V20M24 20L18 26M24 20L30 26"/>
+                <path d="M14 36l4-4 4 4 6-8 6 8"/>
+              </svg>
+              <p class="dz-text">Drop audio files here (wav/mp3/ogg/any supported codec)</p>
+              <p class="dz-sub">or click to browse files</p>
+            </div>
+          </div>
+          <input type="file" id="fileInput" accept="audio/*" style="display:none" onchange="handleFileSelect(this)" />
+          <div class="file-row hidden" id="fileRow">
+            <div class="file-icon-box">♫</div>
+            <div class="file-details">
+              <div class="file-name" id="fileName"></div>
+              <div class="file-size" id="fileSize"></div>
+            </div>
+            <button class="remove-file" onclick="removeFile()">✕</button>
+          </div>
+          <audio id="audioPlayer" controls class="audio-player hidden"></audio>
+        </div>
+
+        <!-- Mic panel -->
+        <div class="panel" id="panelMic">
+          <div class="mic-center">
+            <button class="mic-ring" id="micBtn" onclick="toggleMic()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="28" height="28">
+                <rect x="9" y="2" width="6" height="11" rx="3"/>
+                <path d="M5 10a7 7 0 0014 0M12 19v3M8 22h8"/>
+              </svg>
+            </button>
+            <div class="mic-label" id="micLabel">Tap to record</div>
+            <div class="wave-row hidden" id="waveRow">
+              <span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <div class="rec-time hidden" id="recTime">0:00</div>
+          </div>
+        </div>
+
+        <!-- Demo panel -->
+        <div class="panel" id="panelDemo">
+          <p class="demo-intro">Try a pre-loaded phrase without uploading audio:</p>
+          <div class="demo-list">
+            <button class="demo-item" onclick="loadDemo('hi','नमस्ते, मेरा नाम योगेश है। मैं भारत से हूँ।')">
+              <span class="di-lang">Hindi</span>
+              <span class="di-preview">नमस्ते, मेरा नाम योगेश है...</span>
+            </button>
+            <button class="demo-item" onclick="loadDemo('mr','नमस्कार, माझे नाव आकांक्षा आहे. मी पुण्याहून आहे.')">
+              <span class="di-lang">Marathi</span>
+              <span class="di-preview">नमस्कार, माझे नाव आकांक्षा आहे...</span>
+            </button>
+            <button class="demo-item" onclick="loadDemo('en','Hello, my name is Priyanka. I am from Bangalore and I love language learning.')">
+              <span class="di-lang">English</span>
+              <span class="di-preview">Hello, my name is Priyanka...</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step-card" id="cardProcess">
+      <div class="sc-num">03</div>
+      <div class="sc-body">
+        <h2 class="sc-title">Transcribe</h2>
+        <div class="model-bar">
+          <div class="model-tags">
+            <span class="mtag">Web Speech API</span>
+            <span class="mtag">Whisper API</span>
+            <span class="mtag">Real-time + File</span>
+          </div>
+          <button class="run-btn" id="runBtn" onclick="runTranscription()">
+            Run Transcription <span class="run-arrow">→</span>
+          </button>
+        </div>
+        <div class="pipeline-steps hidden" id="pipelineSteps">
+          <div class="ps-step" id="ps1">
+            <div class="ps-dot"></div>
+            <div class="ps-text">Capturing audio input</div>
+          </div>
+          <div class="ps-step" id="ps2">
+            <div class="ps-dot"></div>
+            <div class="ps-text">Normalizing and validating audio format</div>
+          </div>
+          <div class="ps-step" id="ps3">
+            <div class="ps-dot"></div>
+            <div class="ps-text">Sending audio to recognition engine</div>
+          </div>
+          <div class="ps-step" id="ps4">
+            <div class="ps-dot"></div>
+            <div class="ps-text">Receiving streamed transcription</div>
+          </div>
+          <div class="ps-step" id="ps5">
+            <div class="ps-dot"></div>
+            <div class="ps-text">Displaying output text</div>
+          </div>
+        </div>
+        <div class="progress-track hidden" id="progressTrack">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4: Results -->
+    <div class="step-card hidden" id="cardResults">
+      <div class="sc-num done">✓</div>
+      <div class="sc-body">
+        <h2 class="sc-title">Transcription Result</h2>
+        <div class="result-lang" id="resultLang">Hindi · हिन्दी</div>
+
+        <div class="trans-box">
+          <div class="trans-header">
+            <span class="trans-label">Predicted Text</span>
+            <button class="copy-btn" onclick="copyText()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              Copy
+            </button>
+          </div>
+          <div class="trans-content" id="transContent">—</div>
+        </div>
+
+        <!-- WER -->
+        <div class="wer-card">
+          <div class="wer-title">
+            Word Error Rate (WER) Analysis
+            <span class="wer-opt">— enter reference text to compute</span>
+          </div>
+          <div class="wer-row">
+            <input type="text" class="wer-in" id="refInput" placeholder="Enter the actual / reference sentence..." />
+            <button class="wer-btn" onclick="calculateWER()">Calculate WER</button>
+          </div>
+          <div class="metrics-row hidden" id="metricsRow">
+            <div class="metric-box">
+              <div class="mb-label">WER</div>
+              <div class="mb-val" id="mvWER">—</div>
+            </div>
+            <div class="metric-box accent">
+              <div class="mb-label">Accuracy</div>
+              <div class="mb-val" id="mvAcc">—</div>
+            </div>
+            <div class="metric-box">
+              <div class="mb-label">Ref. Words</div>
+              <div class="mb-val" id="mvRef">—</div>
+            </div>
+            <div class="metric-box">
+              <div class="mb-label">Pred. Words</div>
+              <div class="mb-val" id="mvPred">—</div>
+            </div>
+          </div>
+          <div class="gauge-wrap hidden" id="gaugeWrap">
+            <canvas id="gaugeCanvas" width="280" height="150"></canvas>
+            <div class="gauge-acc" id="gaugeAcc">—</div>
+          </div>
+        </div>
+
+        <div class="result-btns">
+          <button class="rb-secondary" onclick="resetApp()">↺ New Transcription</button>
+          <button class="rb-primary" onclick="downloadTxt()">↓ Download TXT</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- About -->
+  <section class="about-section" id="about">
+    <div class="about-grid">
+      <div class="about-col">
+        <h3 class="about-h3">About VaaNi</h3>
+        <p>VaaNi is a browser-native speech-to-text demo with real-time microphone recognition and file-based ASR support. It works with live audio and uploaded files (wav/mp3/any audio supported by the cloud endpoint or browser codec).</p>
+        <p style="margin-top:1rem">The app can use Web Speech API locally and cloud inference APIs for uploaded files, so it is not limited to a fixed pretrained dataset corpus.</p>
+      </div>
+      <div class="about-col">
+        <h3 class="about-h3">Capabilities</h3>
+        <ul class="cap-list">
+          <li>3 languages: Hindi, Marathi & English</li>
+          <li>Web Speech API + Whisper inference for multilingual speech recognition</li>
+          <li>Automatic stereo-to-mono conversion and 16kHz resampling</li>
+          <li>Word Error Rate (WER) and accuracy scoring</li>
+          <li>Real-time microphone recording support</li>
+          <li>Compatible with .wav and .mp3 formats</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tech Stack -->
+  <section class="tech-section" id="tech">
+    <h3 class="tech-h3">Tech Stack</h3>
+    <div class="tech-row">
+      <div class="tech-item">
+        <div class="ti-icon" style="background:#ee4c2c22;color:#ee4c2c">⚙</div>
+        <div class="ti-name">PyTorch</div>
+      </div>
+      <div class="tech-item">
+        <div class="ti-icon" style="background:#ffbd2e22;color:#e6a817">🤗</div>
+        <div class="ti-name">HuggingFace</div>
+      </div>
+      <div class="tech-item">
+        <div class="ti-icon" style="background:#3b82f622;color:#3b82f6">W2</div>
+        <div class="ti-name">Wav2Vec 2.0</div>
+      </div>
+      <div class="tech-item">
+        <div class="ti-icon" style="background:#10b98122;color:#10b981">♪</div>
+        <div class="ti-name">torchaudio</div>
+      </div>
+      <div class="tech-item">
+        <div class="ti-icon" style="background:#ef444422;color:#ef4444">%</div>
+        <div class="ti-name">jiwer</div>
+      </div>
+      <div class="tech-item">
+        <div class="ti-icon" style="background:#1f293722;color:#1f2937">🌐</div>
+        <div class="ti-name">Web Speech API</div>
+      </div>
+      <div class="tech-item">
+        <div class="ti-icon" style="background:#f97f1622;color:#f97f16">▶</div>
+        <div class="ti-name">Browser + Cloud ASR</div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div>VaaNi · Multilingual Speech-to-Text for Indian Languages</div>
+    <div>Designed for responsive, real-time & file transcription</div>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -18,6 +18,16 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_API_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
 
 
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({
+        "service": "VaaNi Backend",
+        "status": "running",
+        "endpoint": "/transcribe",
+        "method": "POST"
+    }), 200
+
+
 @app.route("/transcribe", methods=["POST"])
 def transcribe():
     if not GROQ_API_KEY:

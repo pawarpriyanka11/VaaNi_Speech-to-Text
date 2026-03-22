@@ -38,20 +38,20 @@ stt_project/
 1. **Install dependencies:**
 
    ```bash
-   pip install flask flask-cors requests
+   pip install -r requirements.txt
    ```
 
-2. **Set your HuggingFace API key:**
+2. **Set your Groq API key:**
 
    ```bash
    # Windows
-   set HF_API_KEY=your_actual_hf_token
+   set GROQ_API_KEY=your_actual_groq_token
 
    # Linux/Mac
-   export HF_API_KEY=your_actual_hf_token
+   export GROQ_API_KEY=your_actual_groq_token
    ```
 
-   > Get a free key: https://huggingface.co/settings/tokens
+   > Get a free key: https://console.groq.com
 
 3. **Start the backend server:**
 
@@ -128,11 +128,11 @@ python backend.py
 
 ### "HuggingFace API key not set" error
 
-**Solution:** Set your API key before starting backend:
+**Solution:** Set your Groq API key before starting backend:
 
 ```bash
-set HF_API_KEY=your_key  # Windows
-export HF_API_KEY=your_key  # Linux/Mac
+set GROQ_API_KEY=your_key  # Windows
+export GROQ_API_KEY=your_key  # Linux/Mac
 python backend.py
 ```
 
@@ -150,7 +150,7 @@ python backend.py
 
 - **Frontend:** Vanilla HTML5 / CSS3 / JavaScript
 - **Microphone API:** Web Speech API (W3C standard)
-- **File ASR:** HuggingFace Whisper API
+- **File ASR:** Groq Whisper API (whisper-large-v3)
 - **Backend Proxy:** Flask + Flask-CORS
 - **Fonts:** Google Fonts (Playfair Display, DM Sans, JetBrains Mono)
 
@@ -159,7 +159,7 @@ python backend.py
 ## License & Attribution
 
 Built as a demonstration project.  
-Audio inference powered by HuggingFace & OpenAI Whisper model.
+Audio inference powered by Groq & OpenAI Whisper model.
 
 ---
 

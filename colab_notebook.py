@@ -1,140 +1,129 @@
 # ================================================
 # Multilingual Speech-to-Text System
-# Using HuggingFace + Wav2Vec2
+# Using Groq Whisper API
 # Project: VaaNi — Speech-to-Text for Indian Languages
 # ================================================
 
 # Install required libraries
 # Run this in Google Colab
 
-# !pip -q install transformers torchaudio jiwer
+# !pip -q install requests
 
-import torch
-import torchaudio
-from transformers import Wav2Vec2Processor, Wav2Vec2ForCTC
-from jiwer import wer
+import os
+import requests
+from google.colab import files
 
 print("=" * 60)
 print("  VaaNi — Multilingual Speech-to-Text")
-print("  Powered by Wav2Vec 2.0 (HuggingFace)")
+print("  Powered by Groq Whisper API")
 print("=" * 60)
 
 # -----------------------------------------------
-# CONFIGURATION — Choose your model
+# CONFIGURATION
 # -----------------------------------------------
-# Available Indian language models (AI4Bharat):
-#   Hindi:   "ai4bharat/indicwav2vec-hindi"
-#   Marathi: "ai4bharat/indicwav2vec-marathi"
-#   Tamil:   "vasista22/wav2vec2-tamil"
-#   Telugu:  "ai4bharat/indicwav2vec-telugu"
-#   Bengali: "ai4bharat/indicwav2vec-bengali"
-# English (default/fallback):
-#   "jonatasgrosman/wav2vec2-large-xlsr-53-english"
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_API_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
 
-LANGUAGE = "English"
-MODEL_NAME = "jonatasgrosman/wav2vec2-large-xlsr-53-english"
-SAMPLE_RATE = 16000  # Wav2Vec2 requires 16kHz
+if not GROQ_API_KEY:
+    print("\n⚠️  GROQ_API_KEY not set!")
+    print("   Get your free API key from: https://console.groq.com")
+    GROQ_API_KEY = input("   Enter your Groq API key: ").strip()
+
+print(f"\n✓ API Key configured")
 
 # -----------------------------------------------
-# 1. Load Pretrained Model
+# 1. Upload Audio File
 # -----------------------------------------------
-print(f"\n[1/5] Loading model: {MODEL_NAME}")
-processor = Wav2Vec2Processor.from_pretrained(MODEL_NAME)
-model = Wav2Vec2ForCTC.from_pretrained(MODEL_NAME)
-model.eval()
-print(f"      Model loaded for language: {LANGUAGE}")
-
-# -----------------------------------------------
-# 2. Upload Audio File (Google Colab)
-# -----------------------------------------------
-print("\n[2/5] Audio Upload")
-
-# Uncomment below if running in Google Colab:
-# from google.colab import files
-# print("      Please upload a .wav or .mp3 audio file...")
-# uploaded = files.upload()
-# file_name = list(uploaded.keys())[0]
-
-# For local testing, set file_name directly:
-file_name = "sample.wav"  # Replace with your audio file path
-print(f"      Using audio file: {file_name}")
+print("\n[1/3] Audio Upload")
+print("      Please upload a .wav, .mp3, or any audio file...")
+uploaded = files.upload()
+file_name = list(uploaded.keys())[0]
+print(f"      ✓ Uploaded: {file_name}")
 
 # -----------------------------------------------
-# 3. Load & Preprocess Audio
+# 2. Transcribe using Groq Whisper API
 # -----------------------------------------------
-print("\n[3/5] Preprocessing Audio")
+print("\n[2/3] Transcribing with Groq Whisper API...")
 
-speech_array, sampling_rate = torchaudio.load(file_name)
-print(f"      Original: {speech_array.shape}, sampling_rate={sampling_rate} Hz")
-
-# Convert stereo to mono (average channels)
-if speech_array.shape[0] > 1:
-    speech_array = torch.mean(speech_array, dim=0, keepdim=True)
-    print("      Stereo → Mono conversion applied")
-
-# Resample to 16kHz if needed
-if sampling_rate != SAMPLE_RATE:
-    resampler = torchaudio.transforms.Resample(
-        orig_freq=sampling_rate,
-        new_freq=SAMPLE_RATE
-    )
-    speech_array = resampler(speech_array)
-    print(f"      Resampled: {sampling_rate} Hz → {SAMPLE_RATE} Hz")
-
-speech = speech_array.squeeze().numpy()
-duration = len(speech) / SAMPLE_RATE
-print(f"      Duration: {duration:.2f} seconds")
-print(f"      Final shape: {speech.shape}")
-
-# -----------------------------------------------
-# 4. Speech-to-Text Inference
-# -----------------------------------------------
-print("\n[4/5] Running Speech-to-Text Inference")
-
-inputs = processor(
-    speech,
-    sampling_rate=SAMPLE_RATE,
-    return_tensors="pt",
-    padding=True
-)
-
-with torch.no_grad():
-    logits = model(**inputs).logits
-
-predicted_ids = torch.argmax(logits, dim=-1)
-transcription = processor.decode(predicted_ids[0])
-
-print("\n" + "─" * 60)
-print(f"  LANGUAGE  : {LANGUAGE}")
-print(f"  MODEL     : {MODEL_NAME}")
-print(f"  PREDICTED : {transcription}")
-print("─" * 60)
+try:
+    with open(file_name, 'rb') as audio_file:
+        response = requests.post(
+            GROQ_API_URL,
+            headers={
+                "Authorization": f"Bearer {GROQ_API_KEY}",
+            },
+            files={
+                "file": (file_name, audio_file, "audio/wav")
+            },
+            data={
+                "model": "whisper-large-v3"
+            },
+            timeout=120
+        )
+    
+    if response.ok:
+        data = response.json()
+        transcription = data.get("text", "")
+        
+        print("\n" + "─" * 60)
+        print(f"  MODEL     : whisper-large-v3 (Groq)")
+        print(f"  PREDICTED : {transcription}")
+        print("─" * 60)
+    else:
+        print(f"\n❌ Error: {response.status_code}")
+        print(f"   {response.text}")
+        transcription = None
+        
+except Exception as e:
+    print(f"\n❌ Error: {e}")
+    transcription = None
 
 # -----------------------------------------------
-# 5. Word Error Rate (WER) Evaluation
+# 3. Word Error Rate (WER) Evaluation (Optional)
 # -----------------------------------------------
-print("\n[5/5] WER Evaluation")
-ref = input("\n  Enter the reference/actual sentence (press Enter to skip): ").strip()
-
-if ref:
-    error_rate = wer(ref.lower(), transcription.lower())
-    accuracy = (1 - error_rate) * 100
-
-    word_count_ref = len(ref.split())
-    word_count_hyp = len(transcription.split())
-
-    print("\n" + "=" * 60)
-    print("  EVALUATION RESULTS")
-    print("=" * 60)
-    print(f"  Reference Text   : {ref}")
-    print(f"  Predicted Text   : {transcription}")
-    print(f"  Word Error Rate  : {error_rate:.4f} ({error_rate*100:.2f}%)")
-    print(f"  Accuracy         : {accuracy:.2f}%")
-    print(f"  Words (Ref.)     : {word_count_ref}")
-    print(f"  Words (Pred.)    : {word_count_hyp}")
-    print("=" * 60)
-else:
-    print("  WER evaluation skipped.")
+if transcription:
+    print("\n[3/3] WER Evaluation (Optional)")
+    ref = input("\n  Enter the reference/actual sentence (press Enter to skip): ").strip()
+    
+    if ref:
+        # Simple WER calculation
+        ref_words = ref.lower().split()
+        hyp_words = transcription.lower().split()
+        
+        # Levenshtein distance for WER
+        def levenshtein(s1, s2):
+            if len(s1) < len(s2):
+                return levenshtein(s2, s1)
+            if len(s2) == 0:
+                return len(s1)
+            previous_row = range(len(s2) + 1)
+            for i, c1 in enumerate(s1):
+                current_row = [i + 1]
+                for j, c2 in enumerate(s2):
+                    insertions = previous_row[j + 1] + 1
+                    deletions = current_row[j] + 1
+                    substitutions = previous_row[j] + (c1 != c2)
+                    current_row.append(min(insertions, deletions, substitutions))
+                previous_row = current_row
+            return previous_row[-1]
+        
+        distance = levenshtein(ref_words, hyp_words)
+        error_rate = distance / len(ref_words) if len(ref_words) > 0 else 0
+        accuracy = (1 - error_rate) * 100
+        
+        print("\n" + "=" * 60)
+        print("  EVALUATION RESULTS")
+        print("=" * 60)
+        print(f"  Reference Text   : {ref}")
+        print(f"  Predicted Text   : {transcription}")
+        print(f"  Word Error Rate  : {error_rate:.4f} ({error_rate*100:.2f}%)")
+        print(f"  Accuracy         : {accuracy:.2f}%")
+        print(f"  Words (Ref.)     : {len(ref_words)}")
+        print(f"  Words (Pred.)    : {len(hyp_words)}")
+        print("=" * 60)
+    else:
+        print("  WER evaluation skipped.")
 
 print("\n✓ Speech-to-Text Completed")
-print("  For demo UI, open index.html in your browser.")
+print("  Supported Languages: Hindi, Marathi, English (and 99+ more)")
+print("  For demo UI, visit: https://pawarpriyanka11.github.io/VaaNi_Speech-to-Text/")

@@ -44,12 +44,10 @@ stt_project/
 2. **Set your Groq API key:**
 
    ```bash
-   # Windows
-   set GROQ_API_KEY=your_actual_groq_token
-
-   # Linux/Mac
-   export GROQ_API_KEY=your_actual_groq_token
+   cp .env.example .env
    ```
+
+   Then edit `.env` and replace `your_groq_api_key_here` with your new Groq API key.
 
    > Get a free key: https://console.groq.com
 
@@ -131,8 +129,9 @@ python backend.py
 **Solution:** Set your Groq API key before starting backend:
 
 ```bash
-set GROQ_API_KEY=your_key  # Windows
-export GROQ_API_KEY=your_key  # Linux/Mac
+cp .env.example .env
+# Edit .env and set:
+# GROQ_API_KEY=your_key
 python backend.py
 ```
 

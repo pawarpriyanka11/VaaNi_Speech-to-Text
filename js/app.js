@@ -271,8 +271,14 @@ async function transcribeUploadedFile(file, btn) {
   try {
     const formData = new FormData();
     formData.append('audio', file);
+    const isLocalPage = ['file:', 'http://localhost', 'http://127.0.0.1'].some(origin =>
+      window.location.href.startsWith(origin)
+    );
+    const backendUrl = isLocalPage
+      ? 'http://localhost:5000/transcribe'
+      : 'https://vaani-speech-to-text.onrender.com/transcribe';
 
-    const response = await fetch('https://vaani-speech-to-text.onrender.com/transcribe', {
+    const response = await fetch(backendUrl, {
       method: 'POST',
       body: formData
     });
